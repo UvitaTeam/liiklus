@@ -43,12 +43,16 @@ public class KafkaRecordsStorage implements RecordsStorage {
 
     String bootstrapServers;
 
+    Map<String, String> otherProps;
+
     private final KafkaProducer<ByteBuffer, ByteBuffer> producer;
 
-    public KafkaRecordsStorage(String bootstrapServers) {
+    public KafkaRecordsStorage(String bootstrapServers, Map<String, String> otherProps) {
         this.bootstrapServers = bootstrapServers;
+        this.otherProps = otherProps;
 
         Map<String, Object> props = new HashMap<>();
+        props.putAll(otherProps);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "liiklus-" + UUID.randomUUID().toString());
         props.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -104,6 +108,7 @@ public class KafkaRecordsStorage implements RecordsStorage {
             return Flux.create(sink -> {
                 try {
                     var properties = new HashMap<String, Object>();
+                    properties.putAll(otherProps);
                     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
                     properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
                     properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
