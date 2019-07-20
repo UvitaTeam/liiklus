@@ -7,6 +7,7 @@ import reactor.core.publisher.DirectProcessor;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,7 +71,7 @@ public interface SubscribeTest extends RecordStorageTestSupport {
 
             await.untilTrue(assigned);
 
-            var envelope = createEnvelope(key);
+            var envelope = createEnvelope(key, Instant.now());
             var offsetInfo = publish(envelope);
 
             await.untilAsserted(() -> {

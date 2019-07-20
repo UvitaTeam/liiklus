@@ -4,8 +4,21 @@ import com.github.bsideup.liiklus.config.RecordPostProcessorChain;
 import com.github.bsideup.liiklus.config.RecordPreProcessorChain;
 import com.github.bsideup.liiklus.positions.GroupId;
 import com.github.bsideup.liiklus.positions.PositionsStorage;
-import com.github.bsideup.liiklus.protocol.*;
+import com.github.bsideup.liiklus.protocol.GetEndOffsetsReply;
+import com.github.bsideup.liiklus.protocol.GetEndOffsetsRequest;
 import com.github.bsideup.liiklus.records.FiniteRecordsStorage;
+import com.github.bsideup.liiklus.protocol.AckRequest;
+import com.github.bsideup.liiklus.protocol.Assignment;
+import com.github.bsideup.liiklus.protocol.GetOffsetsReply;
+import com.github.bsideup.liiklus.protocol.GetOffsetsRequest;
+import com.github.bsideup.liiklus.protocol.LiiklusService;
+import com.github.bsideup.liiklus.protocol.PublishReply;
+import com.github.bsideup.liiklus.protocol.PublishRequest;
+import com.github.bsideup.liiklus.protocol.ReactorLiiklusServiceGrpc;
+import com.github.bsideup.liiklus.protocol.ReceiveReply;
+import com.github.bsideup.liiklus.protocol.ReceiveRequest;
+import com.github.bsideup.liiklus.protocol.SubscribeReply;
+import com.github.bsideup.liiklus.protocol.SubscribeRequest;
 import com.github.bsideup.liiklus.records.RecordPostProcessor;
 import com.github.bsideup.liiklus.records.RecordPreProcessor;
 import com.github.bsideup.liiklus.records.RecordsStorage;
@@ -28,7 +41,14 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.publisher.SignalType;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -68,7 +88,13 @@ public class ReactorLiiklusServiceImpl extends ReactorLiiklusServiceGrpc.Liiklus
                 .map(request -> new Envelope(
                         request.getTopic(),
                         request.getKey().asReadOnlyByteBuffer(),
-                        request.getValue().asReadOnlyByteBuffer()
+                        request.getValue().asReadOnlyByteBuffer(),
+                        request.hasTimestamp() ?
+                                Instant.ofEpochSecond(
+                                        request.getTimestamp().getSeconds(),
+                                        request.getTimestamp().getNanos()
+                                )
+                                : null
                 ))
                 .transform(mono -> {
                     for (RecordPreProcessor processor : recordPreProcessorChain.getAll()) {

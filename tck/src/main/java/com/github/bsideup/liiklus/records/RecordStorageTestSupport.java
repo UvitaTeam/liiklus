@@ -7,6 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -27,11 +28,20 @@ public interface RecordStorageTestSupport {
         return createEnvelope(key, UUID.randomUUID().toString().getBytes());
     }
 
+    default RecordsStorage.Envelope createEnvelope(byte[] key, Instant timestamp) {
+        return createEnvelope(key, UUID.randomUUID().toString().getBytes(), timestamp);
+    }
+
     default RecordsStorage.Envelope createEnvelope(byte[] key, byte[] value) {
+        return createEnvelope(key, value, null);
+    }
+
+    default RecordsStorage.Envelope createEnvelope(byte[] key, byte[] value, Instant timestamp) {
         return new RecordsStorage.Envelope(
                 getTopic(),
                 ByteBuffer.wrap(key),
-                ByteBuffer.wrap(value)
+                ByteBuffer.wrap(value),
+                timestamp
         );
     }
 

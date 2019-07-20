@@ -98,7 +98,14 @@ public class KafkaRecordsStorage implements FiniteRecordsStorage {
     public CompletionStage<OffsetInfo> publish(Envelope envelope) {
         String topic = envelope.getTopic();
 
-        var producerRecord = new ProducerRecord<ByteBuffer, ByteBuffer>(topic, envelope.getKey(), envelope.getValue());
+        var producerRecord = new ProducerRecord<ByteBuffer, ByteBuffer>(
+                topic,
+                null,
+                envelope.getTimestamp().map(Instant::toEpochMilli).orElse(null),
+                envelope.getKey(),
+                envelope.getValue(),
+                null
+        );
 
         return Mono.<OffsetInfo>create(sink -> {
             var future = producer.send(producerRecord, (metadata, exception) -> {
@@ -243,7 +250,8 @@ public class KafkaRecordsStorage implements FiniteRecordsStorage {
                                                         new Envelope(
                                                                 topic,
                                                                 record.key(),
-                                                                record.value()
+                                                                record.value(),
+                                                                Instant.ofEpochMilli(record.timestamp())
                                                         ),
                                                         Instant.ofEpochMilli(record.timestamp()),
                                                         record.partition(),
