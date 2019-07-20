@@ -59,6 +59,7 @@ public class InMemoryRecordsStorage implements RecordsStorage {
 
         var offset = storedPartition.getNextOffset().getAndIncrement();
         storedPartition.getProcessor().onNext(new StoredTopic.StoredPartition.StoredRecord(
+                envelope.getTimestamp().orElseGet(Instant::now),
                 offset,
                 envelope.getKey(),
                 envelope.getValue()
@@ -127,7 +128,8 @@ public class InMemoryRecordsStorage implements RecordsStorage {
                                             new Envelope(
                                                     topic,
                                                     it.getKey().asReadOnlyBuffer(),
-                                                    it.getValue().asReadOnlyBuffer()
+                                                    it.getValue().asReadOnlyBuffer(),
+                                                    it.getTimestamp()
                                             ),
                                             it.getTimestamp(),
                                             partition,
@@ -193,7 +195,7 @@ public class InMemoryRecordsStorage implements RecordsStorage {
             @Value
             static class StoredRecord {
 
-                Instant timestamp = Instant.now();
+                Instant timestamp;
 
                 long offset;
 

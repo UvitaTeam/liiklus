@@ -26,6 +26,7 @@ public interface RecordsStorage {
         Publisher<Stream<? extends PartitionSource>> getPublisher(
                 Supplier<CompletionStage<Map<Integer, Long>>> offsetsProvider
         );
+
     }
 
     @Value
@@ -58,11 +59,18 @@ public interface RecordsStorage {
         @Getter(lazy = true)
         ByteBuffer value = valueEncoder.apply(rawValue);
 
+        Optional<Instant> timestamp;
+
         public Envelope(String topic, ByteBuffer key, ByteBuffer value) {
+            this(topic, key, value, null);
+        }
+
+        public Envelope(String topic, ByteBuffer key, ByteBuffer value, Instant timestamp) {
             this.topic = topic;
             this.rawKey = key;
             this.rawValue = value;
             this.keyEncoder = this.valueEncoder = it -> (ByteBuffer) it;
+            this.timestamp = timestamp == null ? Optional.empty() : Optional.of(timestamp);
         }
 
         public Envelope withTopic(String topic) {
@@ -71,7 +79,8 @@ public interface RecordsStorage {
                     rawKey,
                     keyEncoder,
                     rawValue,
-                    valueEncoder
+                    valueEncoder,
+                    timestamp
             );
         }
 
@@ -81,7 +90,8 @@ public interface RecordsStorage {
                     key,
                     it -> (ByteBuffer) it,
                     rawValue,
-                    valueEncoder
+                    valueEncoder,
+                    timestamp
             );
         }
 
@@ -91,7 +101,8 @@ public interface RecordsStorage {
                     rawKey,
                     keyEncoder,
                     value,
-                    it -> (ByteBuffer) it
+                    it -> (ByteBuffer) it,
+                    timestamp
             );
         }
 
@@ -101,7 +112,8 @@ public interface RecordsStorage {
                     rawKey,
                     (Function<Object, ByteBuffer>) keyEncoder,
                     rawValue,
-                    valueEncoder
+                    valueEncoder,
+                    timestamp
             );
         }
 
@@ -111,7 +123,19 @@ public interface RecordsStorage {
                     rawKey,
                     keyEncoder,
                     rawValue,
-                    (Function<Object, ByteBuffer>) valueEncoder
+                    (Function<Object, ByteBuffer>) valueEncoder,
+                    timestamp
+            );
+        }
+
+        public Envelope withTimestamp(Instant timestamp) {
+            return new Envelope(
+                    topic,
+                    rawKey,
+                    keyEncoder,
+                    rawValue,
+                    valueEncoder,
+                    timestamp == null ? Optional.empty() : Optional.of(timestamp)
             );
         }
     }
